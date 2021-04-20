@@ -1,0 +1,21 @@
+{
+  "name": "timeliner-rest-service",
+  "version": "1.0.0",
+  "description": "\"A GraphQL API service for timeliner app.\"",
+  "main": "server.js",
+  "scripts": {
+    "start": "nodemon server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "\"Yash Lalit\"",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.17.1",
+    "express-graphql": "^0.12.0",
+    "graphql": "^15.5.0",
+    "nodemon": "^2.0.7",
+    "dotenv": "^8.2.0",
+    "firebase": "^8.3.2",
+    "firestore-size": "^2.0.6"
+  }
+}
