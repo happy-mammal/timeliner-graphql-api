@@ -9,17 +9,18 @@ const savedstore = firebase.firestore().collection("savedstore");
 const database = firebase.database().ref();
 
 async function getUserDetails(id){
+    let iskeys=[],sakeys=[],data={};
+
     const user = await database.child(`users/${id}`).once("value");
-    const data = await user.val();
-    const iskeys = Object.keys(await data.intreststores)==null?[]:Object.keys(await data.intreststores);
-    const sakeys = Object.keys(await data.savedstores)==null?[]:Object.keys(await data.savedstores);
-    let intrests = [];
-    let saves = [];
+    const istores = await database.child(`users/${id}/intreststores`).once("value");
+    const sstores = await database.child(`users/${id}/savedstores`).once("value");
 
-    console.log({id:data.id,
-        name:data.name,
-        email:data.email});
+    user.exists()?data = await user.val():null;
+    istores.exists()?iskeys = Object.keys(await data.intreststores):[];
+    sstores.exists()?sakeys = Object.keys(await data.savedstores):[];
 
+    let intrests=[],saves=[];
+    
     for(let i=0;i<iskeys.length;i++){
         const data = await intreststore.doc(iskeys[i]).get();
         intrests = await data.data().users[`${id}`]
@@ -29,14 +30,15 @@ async function getUserDetails(id){
         const data = await savedstore.doc(sakeys[i]).get();
         saves = await data.data().users[`${id}`]
     }
-   
+
 
     return {
         id:data.id,
         name:data.name,
         email:data.email,
+        profile_url:data.profile_url,
         intrest:intrests,
-        saved:saves
+        saved:saves,
     };
 }
 
@@ -48,7 +50,6 @@ async function addUser(uid,name,email){
         intreststores:{},
         savededstores:{},
     }).then(async()=>{
-
         return await getUserDetails(uid);
     }).catch(async (err)=>{
         return `FAILED${err}`;

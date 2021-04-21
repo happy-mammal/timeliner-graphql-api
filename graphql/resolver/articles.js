@@ -53,7 +53,6 @@ async function getStories(){
 
 async function getTrending(){
     let articles=[];
-    console.log(categories);
     for(let i=0;i<categories.length;i++){
         const trending = await database.child("articles").orderByChild("category").equalTo(categories[i]).limitToFirst(1).once("value");
         trending.forEach((doc)=>{
