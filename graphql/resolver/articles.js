@@ -1,5 +1,5 @@
 const firebase = require("firebase");
-const {fbconfig,categories} = require("../../config");
+const {fbconfig,categories,stories, stories} = require("../../config");
 require("firebase/firestore");
 
 firebase.initializeApp(fbconfig);
@@ -44,7 +44,7 @@ return results;
 
 async function getStories(){
     let articles =[];
-    const stories = await database.child("articles").orderByChild("category").equalTo("breaking-news").limitToFirst(10).once("value");
+    const stories = await database.child("articles").orderByChild("category").equalTo(stories).limitToFirst(10).once("value");
     stories.forEach((doc)=>{
         articles.push(doc.val());
     });
