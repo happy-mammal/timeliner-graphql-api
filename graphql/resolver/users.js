@@ -42,11 +42,12 @@ async function getUserDetails(id){
     };
 }
 
-async function addUser(uid,name,email){
+async function addUser(uid,name,email,profile){
     return await database.child(`users/${uid}`).set({
         id:uid,
         name:name,
         email:email,
+        profile_url:profile,
         intreststores:{},
         savededstores:{},
     }).then(async()=>{

@@ -34,7 +34,7 @@ const userMutation ={
             profile_url:{type:GraphQLString},
         },
         async resolve(parent,args){
-            return await resolver.adduser(args.uid,args.name,args.email);
+            return await resolver.adduser(args.uid,args.name,args.email,args.profile_url);
         }
     },
     addIntrest:{
