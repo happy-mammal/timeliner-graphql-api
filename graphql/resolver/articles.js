@@ -29,6 +29,7 @@ for(let i=0;i<keys.length;i++){
    }
 }
 docs.sort();
+docs.reverse();
 if(docs.length>limit){
     docs = docs.slice(0,limit);
 }
