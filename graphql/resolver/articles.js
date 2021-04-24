@@ -44,7 +44,7 @@ return results;
 
 async function getStories(){
     let articles =[];
-    const breaking = await database.child("articles").orderByChild("category").equalTo(stories).limitToFirst(10).once("value");
+    const breaking = await database.child("articles").orderByChild("category").equalTo(stories).limitToLast(10).once("value");
     breaking.forEach((doc)=>{
         articles.push(doc.val());
     });
@@ -54,7 +54,7 @@ async function getStories(){
 async function getTrending(){
     let articles=[];
     for(let i=0;i<categories.length;i++){
-        const trending = await database.child("articles").orderByChild("category").equalTo(categories[i]).limitToFirst(1).once("value");
+        const trending = await database.child("articles").orderByChild("category").equalTo(categories[i]).limitToLast(1).once("value");
         trending.forEach((doc)=>{
             articles.push(doc.val());
         });
@@ -64,7 +64,7 @@ async function getTrending(){
 
 async function getFromSource(source,limit){
     let articles = [];
-    const article = await database.child("articles").orderByChild("source").equalTo(source).limitToFirst(limit).once("value");
+    const article = await database.child("articles").orderByChild("source").equalTo(source).limitToLast(limit).once("value");
     article.forEach((doc)=>{
         articles.push(doc.val());
     });
@@ -84,7 +84,7 @@ async function getFromIntrests(intrests,limit,current){
 
 async function getFromCategory(category,limit){
     let articles = [];
-    const article = await database.child("articles").orderByChild("category").equalTo(category).limitToFirst(limit).once("value");
+    const article = await database.child("articles").orderByChild("category").equalTo(category).limitToLast(limit).once("value");
     article.forEach((doc)=>{
         articles.push(doc.val());
     });
