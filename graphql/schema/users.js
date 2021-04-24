@@ -1,7 +1,9 @@
-const graphql = require("graphql");
-const resolver = require("../resolver/users");
-const {GraphQLObjectType,GraphQLString,GraphQLList} = graphql;
+//Importing modules
+const graphql = require("graphql");//-->graphql module to work with GraphQL types
+const resolver = require("../resolver/users");//-->Getting resolve functions for respective user query & mutation
+const {GraphQLObjectType,GraphQLString,GraphQLList} = graphql;//-->Using graphql data types
 
+//Creating User Type 
 const UserType = new GraphQLObjectType({
     name:"User",
     fields:()=>({
@@ -14,7 +16,9 @@ const UserType = new GraphQLObjectType({
     }),
 });
 
+//Initializing all user queries to userQuery
 const userQuery = {
+    //Get User Details Query
     getUserDetail:{
         type:UserType,
         args:{id:{type:GraphQLString}},
@@ -23,8 +27,9 @@ const userQuery = {
          }
     },
 }
-
+//Initializing all user mutations to userMutation
 const userMutation ={
+    //Add User Mutation
     addUser:{
         type:UserType,
         args:{
@@ -37,6 +42,7 @@ const userMutation ={
             return await resolver.adduser(args.uid,args.name,args.email,args.profile_url);
         }
     },
+    //Add Intrest Mutation
     addIntrest:{
         type:UserType,
         args:{
@@ -47,6 +53,7 @@ const userMutation ={
             return await resolver.addintrest(args.uid,args.intrest);
         }
     },
+    //Add Saved Article Mutation
     addSavedArticle:{
         type:UserType,
         args:{
@@ -59,7 +66,8 @@ const userMutation ={
     }
 }
 
+//Exporting User Schema
 module.exports ={
-    userQueries:userQuery,
-    userMutations:userMutation
+    userQueries:userQuery,//-->Exporting User Query
+    userMutations:userMutation//-->Exporting User Mutation
 }

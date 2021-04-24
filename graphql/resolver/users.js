@@ -1,23 +1,26 @@
-const firebase = require("firebase");
-const {fbconfig} = require("../../config");
-const sizeOf = require("firestore-size");
-require("firebase/firestore");
-require("firebase/database");
+//Importing modules
+const admin = require("firebase-admin");//--> Firebase admin sdk for working with firebase as admin app with serivce-account
+const sizeOf = require("firestore-size");//-->Used for performing size calulations on data and documents
+const {references,collections,pointers} = require("../../config");//-->Geting requried values/data from config
 
-const intreststore = firebase.firestore().collection("intreststore");
-const savedstore = firebase.firestore().collection("savedstore");
-const database = firebase.database().ref();
+//Creating firestore instance and collection
+const intreststore = admin.firestore().collection(collections[1]);//-->Intrest Store Collection
+const savedstore = admin.firestore().collection(collections[2]);//-->Saved Store Collection
 
+//Creating realtime database instance and reference
+const database = admin.database().ref();
+
+//Get User Details function (Used for getting user details)
 async function getUserDetails(id){
     let iskeys=[],sakeys=[],data={};
 
-    const user = await database.child(`users/${id}`).once("value");
-    const istores = await database.child(`users/${id}/intreststores`).once("value");
-    const sstores = await database.child(`users/${id}/savedstores`).once("value");
+    const user = await database.child(`${references[1]}/${id}`).once("value");
+    const istores = await database.child(`${references[1]}/${id}/${collections[1]}`).once("value");
+    const sstores = await database.child(`${references[1]}/${id}/${collections[2]}`).once("value");
 
     user.exists()?data = await user.val():null;
-    istores.exists()?iskeys = Object.keys(await data.intreststores):[];
-    sstores.exists()?sakeys = Object.keys(await data.savedstores):[];
+    istores.exists()?iskeys = Object.keys(await data[`${collections[1]}`]):[];
+    sstores.exists()?sakeys = Object.keys(await data[`${collections[2]}`]):[];
 
     let intrests=[],saves=[];
     
@@ -31,7 +34,6 @@ async function getUserDetails(id){
         saves = await data.data().users[`${id}`]
     }
 
-
     return {
         id:data.id,
         name:data.name,
@@ -41,81 +43,80 @@ async function getUserDetails(id){
         saved:saves,
     };
 }
-
+//Add User function (Used for adding new user)
 async function addUser(uid,name,email,profile){
-    return await database.child(`users/${uid}`).set({
+    return await database.child(`${references[1]}/${uid}`).set({
         id:uid,
         name:name,
         email:email,
         profile_url:profile,
-        intreststores:{},
-        savededstores:{},
+        [`${collections[1]}`]:{},
+        [`${collections[2]}`]:{},
     }).then(async()=>{
         return await getUserDetails(uid);
     }).catch(async (err)=>{
         return `FAILED${err}`;
     });
 }
-
-async function addIntrest(uid,intrest){
-    const currentstore = await getCurrentStore(intreststore,"intrestpointer");
+//Add Intrest function (Used for adding new intrest in intrests of the specified user)
+async function addIntrests(uid,intrest){
+    const currentstore = await getCurrentStore(intreststore,pointers[1]);
     const storeSize = await getStoreSize(intreststore,currentstore);
     const available = 900000-storeSize;
     const dataSize = sizeOf(intrest);
 
     if(available<=500){
         console.log(`NO ENOUGH SPACE AVAILABLE. CREATING NEW STORE...`);
-        const newstore = await createNewStore(intreststore,"intrestpointer");
-        await database.child(`users/${uid}`).update({
-            intreststores:{[`${newstore}`]:true}
+        const newstore = await createNewStore(intreststore,pointers[1]);
+        await database.child(`${references[1]}/${uid}`).update({
+            [`${collections[1]}`]:{[`${newstore}`]:true}
         });
         addIntrest(uid,intrest);
     }else{
         if(dataSize<=available){
             return await intreststore.doc(currentstore).update({
-                [`users.${uid}`]:firebase.firestore.FieldValue.arrayUnion(intrest),
+                [`users.${uid}`]:admin.firestore.FieldValue.arrayUnion(intrest),
             }).then(async()=>{
                 console.log(`SUCCESS [INTREST.]=>${intrest}`);
                 await database.child(`users/${uid}`).update({
-                    intreststores:{[`${currentstore}`]:true}
+                    
+                    [`${collections[1]}`]:{[`${currentstore}`]:true}
                 });
-                const res = await intreststore.doc(currentstore).get();
-            
-                return {intrests:await res.data().users[`${uid}`]};
+                
+                return getUserDetails(uid);
                 
             }).catch((err)=>{
-                console.log(`FAILURE [ERROR.]=>${err}`);
+                console.log(`FAILURE ADD [ERROR.]=>${err}`);
             });
             
         }
     }
 }
-
+//Add Intrest function (Used for adding new saved article in saves of the specified user)
 async function addSavedArticle(uid,articleId){
-    const currentstore = await getCurrentStore(savedstore,"savedpointer");
+    const currentstore = await getCurrentStore(savedstore,pointers[2]);
     const storeSize = await getStoreSize(savedstore,currentstore);
     const available = 900000-storeSize;
     const dataSize = sizeOf(articleId);
 
     if(available<=500){
         console.log(`NO ENOUGH SPACE AVAILABLE. CREATING NEW STORE...`);
-        const newstore = await createNewStore(savedstore,"savedpointer");
-        await database.child(`users/${uid}`).update({
-            savedstores:{[`${newstore}`]:true}
+        const newstore = await createNewStore(savedstore,pointers[2]);
+        await database.child(`${references[1]}/${uid}`).update({
+            [`${collections[2]}`]:{[`${newstore}`]:true}
         });
         addSavedArticle(uid,articleId);
     }else{
         if(dataSize<=available){
             return await savedstore.doc(currentstore).update({
-                [`users.${uid}`]:firebase.firestore.FieldValue.arrayUnion(articleId),
+                [`users.${uid}`]:admin.firestore.FieldValue.arrayUnion(articleId),
             }).then(async()=>{
                 console.log(`SUCCESS [SAVED ARTICLE.]=>${articleId}`);
-                await database.child(`users/${uid}`).update({
-                    savedstores:{[`${currentstore}`]:true}
+                await database.child(`${references[1]}/${uid}`).update({
+                    [`${collections[2]}`]:{[`${currentstore}`]:true}
                 });
-                const res = await savedstore.doc(currentstore).get();
-            
-                return {saved:await res.data().users[`${uid}`]};
+
+                return getUserDetails(uid);
                 
             }).catch((err)=>{
                 console.log(`FAILURE [ERROR.]=>${err}`);
@@ -123,18 +124,17 @@ async function addSavedArticle(uid,articleId){
         }
     }
 }
-
-//HELPER FUNCTIONS--------------------------------------------
+//Get Current Store function (Provides currently pointed datastore where operations should happen)
 async function getCurrentStore(store,pointer){
     const doc = await store.doc(pointer).get();
     return doc.data().current;
 }
-
+//Get Store Size function (Provides currently pointed datastore size)
 async function getStoreSize(store,current){
     const doc = await store.doc(current).get();
     return sizeOf(doc.data());
 }
-
+//Create New Store function (Creates new datastore in specified collection)
 async function createNewStore(store,pointer){
     return await store.add({
         users:{},
@@ -143,7 +143,7 @@ async function createNewStore(store,pointer){
         console.log(`NEW STORE CREATED SUCCESSFULLY ${doc.id}`);
         store.doc(pointer).update({
             current:doc.id,
-            stores:firebase.firestore.FieldValue.arrayUnion(doc.id),
+            stores:admin.firestore.FieldValue.arrayUnion(doc.id),
         }).then(()=>{
             console.log(`NEW STORE UPDATED IN POINTER SUCCESSFULLY`);
         }).catch((err)=>{
@@ -155,13 +155,10 @@ async function createNewStore(store,pointer){
     });
 }
 
-function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
-
+//Exporting User Resolvers
 module.exports = {
-    userdetails:getUserDetails,
-    adduser:addUser,
-    addintrest:addIntrest,
-    addtosaved:addSavedArticle
+    userdetails:getUserDetails,//-->Exporting Get User Details
+    adduser:addUser,//-->Exporting Add User
+    addintrest:addIntrests,//-->Exporting Add Intrests
+    addtosaved:addSavedArticle//-->Exporting Add Saved Article
 }

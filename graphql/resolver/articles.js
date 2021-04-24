@@ -1,18 +1,19 @@
-const firebase = require("firebase");
-const {fbconfig,categories,stories} = require("../../config");
-require("firebase/firestore");
+//Importing modules
+const admin = require("firebase-admin");//--> Firebase admin sdk for working with firebase as admin app with serivce-account
+const {categories,stories,references,collections,pointers} = require("../../config");//-->Geting requried values/data from config
 
-firebase.initializeApp(fbconfig);
+//Creating firestore instance and collection
+const indexstore = admin.firestore().collection(collections[0]);
 
-const indexstore = firebase.firestore().collection("indexes");
+//Creating realtime database instance and reference
+const database = admin.database().ref();
 
-const database = firebase.database().ref();
-
+//Get article by id function (Use for fetching the single article based on it's id)
 async function getArticleById(id){
-    const article = await database.child(`articles/${id}`).once("value");
+    const article = await database.child(`${references[0]}/${id}`).once("value");
     return article.val();
 }
-
+//Get articles function (Used for searching and getting intrest based results)
 async function getArticles(query,limit,current){
 var docs = [];
 var results = [];
@@ -24,9 +25,19 @@ const keys = Object.keys(await indexes.data().articles);
 const data = await indexes.data().articles;
 
 for(let i=0;i<keys.length;i++){
-    if(data[`${keys[i]}`].includes(query)){
+    let noOfMatch = 0;
+    for(let j=0;j<query.length;j++){
+        
+        console.log(keys[i]);
+        if(data[`${keys[i]}`].includes(query[j])){
+           noOfMatch++;
+        }
+    }
+
+    if(noOfMatch===query.length){
         docs.push(keys[i]);
-   }
+    }
+    
 }
 docs.sort();
 docs.reverse();
@@ -34,7 +45,7 @@ if(docs.length>limit){
     docs = docs.slice(0,limit);
 }
 for(let i=0;i<docs.length;i++){
-    const snapshot = await database.child("articles").child(docs[i]).once("value");
+    const snapshot = await database.child(references[0]).child(docs[i]).once("value");
     if (snapshot.exists()) {
         results.push(snapshot.val());
     }
@@ -42,68 +53,57 @@ for(let i=0;i<docs.length;i++){
 
 return results;
 }
-
+//Get stories function (Used for getting breaking-news of the day)
 async function getStories(){
     let articles =[];
-    const breaking = await database.child("articles").orderByChild("category").equalTo(stories).limitToLast(10).once("value");
+    const breaking = await database.child(references[0]).orderByChild("category").equalTo(stories).limitToLast(10).once("value");
     breaking.forEach((doc)=>{
         articles.push(doc.val());
     });
     return articles;
 }
-
+//Get trending function (Used for getting latest article from each category resulting a list of trending)
 async function getTrending(){
     let articles=[];
     for(let i=0;i<categories.length;i++){
-        const trending = await database.child("articles").orderByChild("category").equalTo(categories[i]).limitToLast(1).once("value");
+        const trending = await database.child(references[0]).orderByChild("category").equalTo(categories[i]).limitToLast(1).once("value");
         trending.forEach((doc)=>{
             articles.push(doc.val());
         });
     }
     return articles;
 }
-
+//Get from source function (Used for getting articles based on its source)
 async function getFromSource(source,limit){
     let articles = [];
-    const article = await database.child("articles").orderByChild("source").equalTo(source).limitToLast(limit).once("value");
+    const article = await database.child(references[0]).orderByChild("source").equalTo(source).limitToLast(limit).once("value");
     article.forEach((doc)=>{
         articles.push(doc.val());
     });
     return articles;
 }
-
-async function getFromIntrests(intrests,limit,current){
-    var articles=[];
-    
-    for(let i=0;i<intrests.length;i++){
-        console.log(intrests[i]);
-        const data = await getArticles(intrests[i],limit,current);
-        articles = articles.concat(data);
-    }
-    return articles;
-}
-
+//Get from cateogry function (Used for getting articles based on its category)
 async function getFromCategory(category,limit){
     let articles = [];
-    const article = await database.child("articles").orderByChild("category").equalTo(category).limitToLast(limit).once("value");
+    const article = await database.child(references[0]).orderByChild("category").equalTo(category).limitToLast(limit).once("value");
     article.forEach((doc)=>{
         articles.push(doc.val());
     });
     return articles;
 }
-
+//Get Current Index Store function (Provides currently pointed datastore where operations should happen)
 async function getCurrentindexstore(){
-    const doc = await indexstore.doc("indexpointer").get();
+    const doc = await indexstore.doc(pointers[0]).get();
     return doc.data().current;
 }
-
+//Exporting Articles Resolvers
 module.exports={
-    byid:getArticleById,
-    search:getArticles,
-    stories:getStories,
-    trending:getTrending,
-    bysource:getFromSource,
-    bycategory:getFromCategory,
-    byintrests:getFromIntrests,
-    current:getCurrentindexstore
+    byid:getArticleById,//-->Exporting Get Article By ID
+    search:getArticles,//-->Exporting Get Articles
+    stories:getStories,//-->Exporting Get Stories
+    trending:getTrending,//-->Exporting Get Trending
+    bysource:getFromSource,//-->Exporting Get From Source
+    bycategory:getFromCategory,//-->Exporting Get From Category
+    byintrests:getArticles,//-->Exporting Get Articles
+    current:getCurrentindexstore//-->Exporting Get Current Index Store
 }
