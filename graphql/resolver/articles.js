@@ -73,6 +73,15 @@ async function getTrending(){
     }
     return articles;
 }
+//Get latest function (Used for getting 20 latest articles at present)
+async function getLatest(){
+    let articles =[];
+    const latest = await database.child(references[0]).orderByChild("publishedAt").limitToLast(20).once("value");
+    latest.forEach((doc)=>{
+        articles.push(doc.val());
+    });
+    return articles;
+}
 //Get from source function (Used for getting articles based on its source)
 async function getFromSource(source,limit){
     let articles = [];
@@ -102,6 +111,7 @@ module.exports={
     search:getArticles,//-->Exporting Get Articles
     stories:getStories,//-->Exporting Get Stories
     trending:getTrending,//-->Exporting Get Trending
+    latest:getLatest,//-->Exporting Get Latest
     bysource:getFromSource,//-->Exporting Get From Source
     bycategory:getFromCategory,//-->Exporting Get From Category
     byintrests:getArticles,//-->Exporting Get Articles

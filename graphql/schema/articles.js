@@ -49,15 +49,22 @@ const articleQuery = {
     getStories:{
         type:GraphQLList(ArticleType),
         async resolve(parent,args){
-            return await resolver.stories()
+            return await resolver.stories();
          }
     },
     //Get Treding Query
     getTrending:{
         type:GraphQLList(ArticleType),
         async resolve(parent,args){
-            return await resolver.trending()
+            return await resolver.trending();
          }
+    },
+    //Get Treding Query
+    getLatest:{
+        type:GraphQLList(ArticleType),
+        async resolve(parent,args){
+            return await resolver.latest();
+        }
     },
     //Get Article Query
     getArticle:{
