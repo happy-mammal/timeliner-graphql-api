@@ -14,38 +14,43 @@ async function getArticleById(id){
     return article.val();
 }
 //Get articles function (Used for searching and getting intrest based results)
-async function getArticles(query,limit,current){
+async function getArticles(query,current){
 var docs = [];
 var results = [];
 
+var limit = query.length<20?20/query.length:1;
+console.log(limit);
 const indexes = await indexstore.doc(current).get();
 
 const keys = Object.keys(await indexes.data().articles);
 
 const data = await indexes.data().articles;
 
-for(let i=0;i<keys.length;i++){
-    let noOfMatch = 0;
-    for(let j=0;j<query.length;j++){
-        
-        console.log(keys[i]);
-        if(data[`${keys[i]}`].includes(query[j])){
-           noOfMatch++;
+keys.sort();
+
+keys.reverse();
+
+
+if(limit>0){
+    for(let j=0;j<query.length;j++){ 
+        let noOfMatches = 0;
+        for(let i=0;i<keys.length;i++){
+            if(data[`${keys[i]}`].includes(query[j])){ 
+                if(noOfMatches!=limit){
+                    docs.push(keys[i]);
+                    noOfMatches++;
+                }else{
+                    break;
+                }
+            }
         }
     }
+}
 
-    if(noOfMatch===query.length){
-        docs.push(keys[i]);
-    }
-    
-}
-docs.sort();
-docs.reverse();
-if(docs.length>limit){
-    docs = docs.slice(0,limit);
-}
 for(let i=0;i<docs.length;i++){
+    
     const snapshot = await database.child(references[0]).child(docs[i]).once("value");
+        
     if (snapshot.exists()) {
         results.push(snapshot.val());
     }

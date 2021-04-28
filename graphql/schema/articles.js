@@ -77,10 +77,10 @@ const articleQuery = {
     //Get Articles Query
     getArticles:{
         type:GraphQLList(ArticleType),
-        args:{term:{type:GraphQLList(GraphQLString)},limit:{type:GraphQLInt}},
+        args:{term:{type:GraphQLList(GraphQLString)}},
         async resolve(parent,args){
            const current = await resolver.current();
-           return await resolver.search(args.term,args.limit,current)
+           return await resolver.search(args.term,current)
         }
     },
     //Get Articles From Source Query
@@ -102,10 +102,10 @@ const articleQuery = {
     //Get Articles From Intrests Query
     getArticlesFromIntrests:{
         type:GraphQLList(ArticleType),
-        args:{intrests:{type: GraphQLList(GraphQLString)},limit:{type:GraphQLInt}},
+        args:{intrests:{type: GraphQLList(GraphQLString)}},
         async resolve(parent,args){
             const current = await resolver.current();
-            return await resolver.byintrests(args.intrests,args.limit,current);
+            return await resolver.byintrests(args.intrests,current);
         }
     }
 }
