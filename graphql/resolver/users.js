@@ -12,7 +12,7 @@ const database = admin.database().ref();
 
 //Get User Details function (Used for getting user details)
 async function getUserDetails(id){
-    let iskeys=[],sakeys=[],data={};
+    let iskeys=[],sakeys=[];
 
     const user = await database.child(`${references[1]}/${id}`).once("value");
     const istores = await database.child(`${references[1]}/${id}/${collections[1]}`).once("value");
@@ -59,11 +59,12 @@ async function addUser(uid,name,email,profile){
     });
 }
 //Add Intrest function (Used for adding new intrest in intrests of the specified user)
-async function addIntrests(uid,intrest){
+async function addIntrests(uid,intrests,length,totalLength){
+
     const currentstore = await getCurrentStore(intreststore,pointers[1]);
     const storeSize = await getStoreSize(intreststore,currentstore);
     const available = 900000-storeSize;
-    const dataSize = sizeOf(intrest);
+    const dataSize = sizeOf(intrests);
 
     if(available<=500){
         console.log(`NO ENOUGH SPACE AVAILABLE. CREATING NEW STORE...`);
@@ -71,33 +72,40 @@ async function addIntrests(uid,intrest){
         await database.child(`${references[1]}/${uid}`).update({
             [`${collections[1]}`]:{[`${newstore}`]:true}
         });
-        addIntrest(uid,intrest);
+        addIntrests(uid,intrests,length,totalLength);
     }else{
         if(dataSize<=available){
-            return await intreststore.doc(currentstore).update({
-                [`users.${uid}`]:admin.firestore.FieldValue.arrayUnion(intrest),
+            for(var i=0;i<length;i++){
+            await intreststore.doc(currentstore).update({
+                [`users.${uid}`]:admin.firestore.FieldValue.arrayUnion(intrests[i]),
             }).then(async()=>{
-                console.log(`SUCCESS [INTREST.]=>${intrest}`);
+                console.log(`SUCCESS [INTREST.]=>${intrests[i]}`);
                 await database.child(`users/${uid}`).update({
-                    
                     [`${collections[1]}`]:{[`${currentstore}`]:true}
-                });
-                
-                return getUserDetails(uid);
-                
+                });      
             }).catch((err)=>{
                 console.log(`FAILURE ADD [ERROR.]=>${err}`);
             });
-            
+
+            }
+            if(totalLength>length){
+                intrests = intrests.slice(length,totalLength);
+                addIntrests(uid,intrests,intrests.length,totalLength);
+            }else{
+                return getUserDetails(uid);
+            }
+        }else{
+            addIntrests(uid,intrests,(intrests.length)/2,intrests.length);
         }
     }
+
 }
 //Add Intrest function (Used for adding new saved article in saves of the specified user)
-async function addSavedArticle(uid,articleId){
+async function addSavedArticle(uid,articles,length,totalLength){
     const currentstore = await getCurrentStore(savedstore,pointers[2]);
     const storeSize = await getStoreSize(savedstore,currentstore);
     const available = 900000-storeSize;
-    const dataSize = sizeOf(articleId);
+    const dataSize = sizeOf(articles);
 
     if(available<=500){
         console.log(`NO ENOUGH SPACE AVAILABLE. CREATING NEW STORE...`);
@@ -105,25 +113,36 @@ async function addSavedArticle(uid,articleId){
         await database.child(`${references[1]}/${uid}`).update({
             [`${collections[2]}`]:{[`${newstore}`]:true}
         });
-        addSavedArticle(uid,articleId);
-    }else{
+        addSavedArticle(uid,articled,length,totalLength);
+    }
+    else{
         if(dataSize<=available){
-            return await savedstore.doc(currentstore).update({
-                [`users.${uid}`]:admin.firestore.FieldValue.arrayUnion(articleId),
-            }).then(async()=>{
-                console.log(`SUCCESS [SAVED ARTICLE.]=>${articleId}`);
-                await database.child(`${references[1]}/${uid}`).update({
-                    [`${collections[2]}`]:{[`${currentstore}`]:true}
-                });
+            for(var i=0;i<length;i++){
+                await savedstore.doc(currentstore).update({
+                    [`users.${uid}`]:admin.firestore.FieldValue.arrayUnion(articles[i]),
+                }).then(async()=>{
+                    console.log(`SUCCESS [SAVED ARTICLE.]=>${articles[i]}`);
+                    await database.child(`${references[1]}/${uid}`).update({
+                        [`${collections[2]}`]:{[`${currentstore}`]:true}
+                    });
+                }).catch((err)=>{
+                    console.log(`FAILURE [ERROR.]=>${err}`);
+                });   
+            } 
 
+            if(totalLength>length){
+                articles = articles.slice(length,totalLength);
+                addSavedArticle(uid,articles,articles.length,totalLength);
+            }else{
                 return getUserDetails(uid);
-                
-            }).catch((err)=>{
-                console.log(`FAILURE [ERROR.]=>${err}`);
-            });    
+            }
+        }
+        else{
+            addSavedArticle(uid,articles,(articles.length)/2,articles.length);
         }
     }
 }
+
 //Get Current Store function (Provides currently pointed datastore where operations should happen)
 async function getCurrentStore(store,pointer){
     const doc = await store.doc(pointer).get();

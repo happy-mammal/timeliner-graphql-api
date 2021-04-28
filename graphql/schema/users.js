@@ -47,10 +47,10 @@ const userMutation ={
         type:UserType,
         args:{
             uid:{type:GraphQLString},
-            intrest:{type:GraphQLString},
+            intrest:{type:GraphQLList(GraphQLString)},
         },
         async resolve(parent,args){
-            return await resolver.addintrest(args.uid,args.intrest);
+            return await resolver.addintrest(args.uid,args.intrest,args.intrest.length,args.intrest.length);
         }
     },
     //Add Saved Article Mutation
@@ -58,10 +58,10 @@ const userMutation ={
         type:UserType,
         args:{
             uid:{type:GraphQLString},
-            articleId:{type:GraphQLString},
+            articles:{type:GraphQLList(GraphQLString)},
         },
         async resolve(parent,args){
-            return await resolver.addtosaved(args.uid,args.articleId);
+            return await resolver.addtosaved(args.uid,args.articles,args.articles.length,args.articles.length);
         }
     }
 }
