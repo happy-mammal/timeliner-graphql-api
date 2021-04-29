@@ -12,7 +12,7 @@ const database = admin.database().ref();
 
 //Get User Details function (Used for getting user details)
 async function getUserDetails(id){
-    let iskeys=[],sakeys=[];
+    let iskeys=[],sakeys=[],data={};
 
     const user = await database.child(`${references[1]}/${id}`).once("value");
     const istores = await database.child(`${references[1]}/${id}/${collections[1]}`).once("value");
