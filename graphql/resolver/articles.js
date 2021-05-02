@@ -41,6 +41,7 @@ for(let i=0;i<keys.length;i++){
         docs.push(keys[i]);
     }
 }
+
 if(docs.length==0){
     if(limit>0){
         for(let j=0;j<query.length;j++){ 
