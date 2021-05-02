@@ -30,17 +30,29 @@ keys.sort();
 
 keys.reverse();
 
-
-if(limit>0){
-    for(let j=0;j<query.length;j++){ 
-        let noOfMatches = 0;
-        for(let i=0;i<keys.length;i++){
-            if(data[`${keys[i]}`].includes(query[j])){ 
-                if(noOfMatches!=limit){
-                    docs.push(keys[i]);
-                    noOfMatches++;
-                }else{
-                    break;
+for(let i=0;i<keys.length;i++){
+    var keywordsMatch = 0;
+    for(let j=0;j<query.length;j++){
+        if(data[`${keys[i]}`].includes(query[j])){
+            keywordsMatch++;
+        }
+    }
+    if(keywordsMatch>=query.length){
+        docs.push(keys[i]);
+    }
+}
+if(docs.length==0){
+    if(limit>0){
+        for(let j=0;j<query.length;j++){ 
+            let noOfMatches = 0;
+            for(let i=0;i<keys.length;i++){
+                if(data[`${keys[i]}`].includes(query[j])){ 
+                    if(noOfMatches!=limit){
+                        docs.push(keys[i]);
+                        noOfMatches++;
+                    }else{
+                        break;
+                    }
                 }
             }
         }
