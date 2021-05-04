@@ -1,7 +1,7 @@
 //Importing Modules
 const  express = require("express"); //-->Express Module
 const middleware = require("./graphql/index"); //-->GraphQL Server as middleware
-const {port} = require("./config"); //-->Port from configuration
+const {port} = require("./configs/config"); //-->Port from configuration
 
 //Initializing express app
 const app = express(); 
