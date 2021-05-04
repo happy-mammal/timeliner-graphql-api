@@ -7,63 +7,86 @@ const {GraphQLObjectType,GraphQLString,GraphQLList} = graphql;//-->Using graphql
 const UserType = new GraphQLObjectType({
     name:"User",
     fields:()=>({
-        id:{type:GraphQLString},
-        name:{type:GraphQLString},
-        email:{type:GraphQLString},
-        profile_url:{type:GraphQLString},
-        intrest:{type:GraphQLList(GraphQLString)},
-        saved:{type:GraphQLList(GraphQLString)},
+        userId:{type:GraphQLString},
+        istores:{type:GraphQLList(GraphQLString)},
+        sstores:{type:GraphQLList(GraphQLString)},
+        intrests:{type:GraphQLList(GraphQLString)},
+        saves:{type:GraphQLList(GraphQLString)},
     }),
 });
 
 //Initializing all user queries to userQuery
 const userQuery = {
     //Get User Details Query
-    getUserDetail:{
+    getUserDetails:{
         type:UserType,
-        args:{id:{type:GraphQLString}},
+        args:{
+            userId:{type:GraphQLString},
+        },
         async resolve(parent,args){
-            return await resolver.userdetails(args.id);
-         }
+            return await resolver.getuserdetails(args.userId);
+         },
     },
-}
+};
+
 //Initializing all user mutations to userMutation
 const userMutation ={
     //Add User Mutation
     addUser:{
         type:UserType,
         args:{
-            uid:{type:GraphQLString},
-            name:{type:GraphQLString},
-            email:{type:GraphQLString},
-            profile_url:{type:GraphQLString},
+            userId:{type:GraphQLString},
         },
         async resolve(parent,args){
-            return await resolver.adduser(args.uid,args.name,args.email,args.profile_url);
-        }
+            return await resolver.adduser(args.userId);
+        },
     },
-    //Add Intrest Mutation
-    addIntrest:{
+    //Add Intrests Mutation
+    addIntrests:{
         type:UserType,
         args:{
-            uid:{type:GraphQLString},
-            intrest:{type:GraphQLList(GraphQLString)},
+            userId:{type:GraphQLString},
+            intrests:{type:GraphQLList(GraphQLString)},
         },
         async resolve(parent,args){
-            return await resolver.addintrest(args.uid,args.intrest,args.intrest.length,args.intrest.length);
-        }
+            return await resolver.addintrests(args.userId,args.intrests,args.intrests.length,args.intrests.length);
+        },
     },
-    //Add Saved Article Mutation
-    addSavedArticle:{
+    //Add Saves Mutation
+    addSaves:{
         type:UserType,
         args:{
-            uid:{type:GraphQLString},
-            articles:{type:GraphQLList(GraphQLString)},
+            userId:{type:GraphQLString},
+            articleIds:{type:GraphQLList(GraphQLString)},
         },
         async resolve(parent,args){
-            return await resolver.addtosaved(args.uid,args.articles,args.articles.length,args.articles.length);
-        }
-    }
+            return await resolver.addsaves(args.userId,args.articleIds,args.articleIds.length,args.articleIds.length);
+        },
+    },
+    //Remove Intrests Mutation
+    removeIntrests:{
+        type:UserType,
+        args:{
+            userId:{type:GraphQLString},
+            intrests:{type:GraphQLList(GraphQLString)},
+            stores:{type:GraphQLList(GraphQLString)},
+        },
+        async resolve(parent,args){
+            return await resolver.removeintrests(args.userId,args.intrests,args.stores);
+        },
+    },
+    //Remove Saves Mutation
+    removeSaves:{
+        type:UserType,
+        args:{
+            userId:{type:GraphQLString},
+            articleIds:{type:GraphQLList(GraphQLString)},
+            stores:{type:GraphQLList(GraphQLString)},
+        },
+        async resolve(parent,args){
+            return await resolver.removesaves(args.userId,args.articleIds,args.stores);
+        },
+    },
 }
 
 //Exporting User Schema

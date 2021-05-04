@@ -1,7 +1,7 @@
 //Importing modules
 const admin = require("firebase-admin");//--> Firebase admin sdk for working with firebase as admin app with serivce-account
 const sizeOf = require("firestore-size");//-->Used for performing size calulations on data and documents
-const {references,collections,pointers} = require("../../config");//-->Geting requried values/data from config
+const {references,collections,pointers} = require("../../configs/config");//-->Geting requried values/data from config
 
 //Creating firestore instance and collection
 const intreststore = admin.firestore().collection(collections[1]);//-->Intrest Store Collection
@@ -17,7 +17,7 @@ async function getUserDetails(id){
     const user = await database.child(`${references[1]}/${id}`).once("value");
     const istores = await database.child(`${references[1]}/${id}/${collections[1]}`).once("value");
     const sstores = await database.child(`${references[1]}/${id}/${collections[2]}`).once("value");
-
+    
     user.exists()?data = await user.val():null;
     istores.exists()?iskeys = Object.keys(await data[`${collections[1]}`]):[];
     sstores.exists()?sakeys = Object.keys(await data[`${collections[2]}`]):[];
@@ -35,21 +35,17 @@ async function getUserDetails(id){
     }
 
     return {
-        id:data.id,
-        name:data.name,
-        email:data.email,
-        profile_url:data.profile_url,
-        intrest:intrests,
-        saved:saves,
+        userId:data.id,
+        istores: iskeys,
+        sstores: sakeys,
+        intrests:intrests,
+        saves:saves,
     };
 }
 //Add User function (Used for adding new user)
-async function addUser(uid,name,email,profile){
+async function addUser(uid){
     return await database.child(`${references[1]}/${uid}`).set({
         id:uid,
-        name:name,
-        email:email,
-        profile_url:profile,
         [`${collections[1]}`]:{},
         [`${collections[2]}`]:{},
     }).then(async()=>{
@@ -58,7 +54,7 @@ async function addUser(uid,name,email,profile){
         return `FAILED${err}`;
     });
 }
-//Add Intrest function (Used for adding new intrest in intrests of the specified user)
+//Add Intrests function (Used for adding new intrests in intrests list of the specified user)
 async function addIntrests(uid,intrests,length,totalLength){
 
     const currentstore = await getCurrentStore(intreststore,pointers[1]);
@@ -100,8 +96,8 @@ async function addIntrests(uid,intrests,length,totalLength){
     }
 
 }
-//Add Intrest function (Used for adding new saved article in saves of the specified user)
-async function addSavedArticle(uid,articles,length,totalLength){
+//Add Saves function (Used for adding new articles in saves list of the specified user)
+async function addSaves(uid,articles,length,totalLength){
     const currentstore = await getCurrentStore(savedstore,pointers[2]);
     const storeSize = await getStoreSize(savedstore,currentstore);
     const available = 900000-storeSize;
@@ -142,7 +138,43 @@ async function addSavedArticle(uid,articles,length,totalLength){
         }
     }
 }
-
+//Remove Intrests function (Used for removing intrests from the intrests list of the specified user)
+async function removeIntrests(uid,intrests,stores){
+    for(let i =0;i<stores.length;i++){
+        for(let j=0;j<intrests.length;j++){
+            await intreststore.doc(stores[i]).update({
+                [`users.${uid}`]:admin.firestore.FieldValue.arrayRemove(intrests[j]),
+            }).then(async()=>{
+                console.log(`SUCCESS [INTREST REMOVED.]=>${intrests[i]}`);
+                await database.child(`users/${uid}`).update({
+                    [`${collections[1]}`]:{[`${stores[i]}`]:true}
+                });      
+            }).catch((err)=>{
+                console.log(`FAILURE REMOVE [ERROR.]=>${err}`);
+            });
+        }
+    }
+    return getUserDetails(uid);
+}
+//Remove Saves function (Used for removing articles from the saves list of the specified user)
+async function removeSaves(uid,saves,stores){
+    for(let i =0;i<stores.length;i++){
+        for(let j=0;j<saves.length;j++){
+            await savedstore.doc(stores[i]).update({
+                [`users.${uid}`]:admin.firestore.FieldValue.arrayRemove(saves[j]),
+            }).then(async()=>{
+                console.log(`SUCCESS [SAVES REMOVED.]=>${intrests[i]}`);
+                await database.child(`users/${uid}`).update({
+                    [`${collections[2]}`]:{[`${stores[i]}`]:true}
+                });      
+            }).catch((err)=>{
+                console.log(`FAILURE REMOVE [ERROR.]=>${err}`);
+            });
+              
+        }
+    }
+    return getUserDetails(uid);
+}
 //Get Current Store function (Provides currently pointed datastore where operations should happen)
 async function getCurrentStore(store,pointer){
     const doc = await store.doc(pointer).get();
@@ -176,8 +208,10 @@ async function createNewStore(store,pointer){
 
 //Exporting User Resolvers
 module.exports = {
-    userdetails:getUserDetails,//-->Exporting Get User Details
+    getuserdetails:getUserDetails,//-->Exporting Get User Details
     adduser:addUser,//-->Exporting Add User
-    addintrest:addIntrests,//-->Exporting Add Intrests
-    addtosaved:addSavedArticle//-->Exporting Add Saved Article
+    addintrests:addIntrests,//-->Exporting Add Intrests
+    addsaves:addSaves,//-->Exporting Add Saves
+    removeintrests:removeIntrests,//-->Exporting Remove Intrests
+    removesaves:removeSaves,//-->Exporting Remove Saves
 }
