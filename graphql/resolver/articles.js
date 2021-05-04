@@ -1,6 +1,6 @@
 //Importing modules
 const admin = require("firebase-admin");//--> Firebase admin sdk for working with firebase as admin app with serivce-account
-const {categories,stories,references,collections,pointers} = require("../../config");//-->Geting requried values/data from config
+const {categories,stories,references,collections,pointers} = require("../../configs/config");//-->Geting requried values/data from config
 
 //Creating firestore instance and collection
 const indexstore = admin.firestore().collection(collections[0]);
@@ -8,23 +8,29 @@ const indexstore = admin.firestore().collection(collections[0]);
 //Creating realtime database instance and reference
 const database = admin.database().ref();
 
-//Get article by id function (Use for fetching the single article based on it's id)
-async function getArticleById(id){
-    const article = await database.child(`${references[0]}/${id}`).once("value");
-    return article.val();
+//Get Saved Articles function (Used for getting multiple articles by specifying the ids)
+async function getArticlesById(ids){
+    let articles = [];
+    for(let i=0;i<ids.length;i++){
+        const article = await database.child(`${references[0]}/${ids[i]}`).once("value");
+        articles.push(article.val());
+    }
+    return articles;
 }
 //Get articles function (Used for searching and getting intrest based results)
-async function getArticles(query,current){
+async function getArticles(query,stores){
 var docs = [];
 var results = [];
 
 var limit = query.length<20?20/query.length:1;
-console.log(limit);
-const indexes = await indexstore.doc(current).get();
 
-const keys = Object.keys(await indexes.data().articles);
+for(let s = 0;s<stores.length;s++){
 
-const data = await indexes.data().articles;
+var indexes = await indexstore.doc(stores[s]).get();
+
+var keys = Object.keys(await indexes.data().articles);
+
+var data = await indexes.data().articles;
 
 keys.sort();
 
@@ -69,6 +75,7 @@ for(let i=0;i<docs.length;i++){
     }
 }
 
+}
 return results;
 }
 //Get stories function (Used for getting breaking-news of the day)
@@ -121,11 +128,11 @@ async function getFromCategory(category,limit){
 //Get Current Index Store function (Provides currently pointed datastore where operations should happen)
 async function getCurrentindexstore(){
     const doc = await indexstore.doc(pointers[0]).get();
-    return doc.data().current;
+    return doc.data().stores;
 }
 //Exporting Articles Resolvers
 module.exports={
-    byid:getArticleById,//-->Exporting Get Article By ID
+    byid:getArticlesById,//-->Exporting Get Articles By ID
     search:getArticles,//-->Exporting Get Articles
     stories:getStories,//-->Exporting Get Stories
     trending:getTrending,//-->Exporting Get Trending
